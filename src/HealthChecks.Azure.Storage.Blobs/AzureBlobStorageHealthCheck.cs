@@ -54,8 +54,18 @@ public sealed class AzureBlobStorageHealthCheck : IHealthCheck
                     .MoveNextAsync()
                     .ConfigureAwait(false);
             }
+            if(_options.ReportLevel == BlobHealthCheckReportLevel.Standard)
+                return HealthCheckResult.Healthy();
 
-            return HealthCheckResult.Healthy();
+            string containerName = _options.ContainerName ?? "Unspecified";
+            string description =
+                $"Successfully checked the health of container '{containerName}' for account '{_blobServiceClient.AccountName}'.";
+            var data = new Dictionary<string, object>
+            {
+                { "ContainerName", containerName },
+                { "AccountName", _blobServiceClient.AccountName }
+            };
+            return new HealthCheckResult(HealthStatus.Healthy, description, data: data);
         }
         catch (Exception ex)
         {
